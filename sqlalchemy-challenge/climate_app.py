@@ -1,10 +1,10 @@
 import numpy as np
-
+import datetime as dt
 import sqlalchemy
 from sqlalchemy.ext.automap import automap_base
 from sqlalchemy.orm import Session
 from sqlalchemy import create_engine, func
-
+import pandas as pd
 from flask import Flask, jsonify
 
 
@@ -58,10 +58,18 @@ def precipitation():
     # Create our session (link) from Python to the DB
     session = Session(engine)
 
+    #Using this date, retrieve the previous 12 months of precipitation data by querying the 12 previous months of data. **Note:** Do not pass in the date as a variable to your query.
    
     #create the query using `date` as the key and `prcp` as the value 
-    results = (session.query(measurement.date, measurement.prcp)
-                      .order_by(measurement.date))
+    date17 = session.query(measurement.date).order_by(measurement.date.desc()).first()
+    
+    #find the last 12 months of data
+    date16 = dt.date(2017, 8, 23) - dt.timedelta(days=365)
+    
+    #take 
+    results = session.query(measurement.date, measurement.prcp).\
+        filter(measurement.date > date16).\
+        order_by(measurement.date).all()
 
     session.close()
     
@@ -69,8 +77,8 @@ def precipitation():
     date_prcp_query = []
     for result in results:
         query = {}
-        query["date"]= result.date
-        query["prcp"] = result.prcp
+        query['date']= results.date
+        query['prcp'] = results.prcp
         date_prcp_query.append(query)
     
 
@@ -95,8 +103,8 @@ def stations():
     stat_query = []
     for st in query_station:
         row = {}
-        row["name"] = query_station[0]
-        row["station"] = query_station[1]
+        row['name'] = query_station[0]
+        row['station'] = query_station[1]
         stat_query.append(row)
         
    #return jsonify
@@ -125,8 +133,8 @@ def tobs():
     temp_query = []
     for temp in temp_obs:
         row = {}
-        row["date"] = temp_obs[0]
-        row["tobs"] = temp_obs[1]
+        row['date'] = temp_obs[0]
+        row['tobs'] = temp_obs[1]
         temp_query.append(row)
 
     
