@@ -70,17 +70,17 @@ def precipitation():
     results = session.query(measurement.date, measurement.prcp).\
         filter(measurement.date > date16).\
         order_by(measurement.date).all()
-
+    
     session.close()
     
     #Convert the query results to a dictionary using `date` as the key and `prcp` as the value 
     date_prcp_query = []
     for result in results:
         query = {}
-        query['date']= results.date
-        query['prcp'] = results.prcp
+        query['date']= result[0]
+        query['prcp'] = result[1]
         date_prcp_query.append(query)
-    
+    print(date_prcp_query)
 
     # Return the JSON representation of your dictionary
 
@@ -103,8 +103,8 @@ def stations():
     stat_query = []
     for st in query_station:
         row = {}
-        row['name'] = query_station[0]
-        row['station'] = query_station[1]
+        row['name'] = st[0]
+        row['station'] = st[1]
         stat_query.append(row)
         
    #return jsonify
@@ -121,7 +121,7 @@ def tobs():
     session = Session(engine)
     
     #Query the dates and temperature observations of the most active station for the previous year of data.
-    temp_obs = session.query(measurement.tobs).\
+    temp_obs = session.query(measurement.tobs, measurement.date).\
         filter(measurement.date  < '2017-08-23').\
         filter(measurement.date > '2016-08-23').\
         filter(measurement.station == 'USC00519281').\
@@ -129,13 +129,15 @@ def tobs():
         all()
     session.close()
     #find the first one of active
+    print(temp_obs)
     
     temp_query = []
     for temp in temp_obs:
         row = {}
-        row['date'] = temp_obs[0]
-        row['tobs'] = temp_obs[1]
+        row['tobs'] = temp[0]
+        row['date'] = temp[1]
         temp_query.append(row)
+    
 
     
     #Return a JSON list of temperature observations (TOBS) for the previous year.
@@ -155,7 +157,7 @@ def start_date(start):
    #create a query for all the values for start
     
     start_temp = session.query(func.min(measurement.tobs), func.max(measurement.tobs), func.avg(measurement.tobs)).\
-                 filter(measurement.station  <= start ).all()     
+                 filter(measurement.date  <= start ).all()     
     session.close()
     
     # #Return a JSON list of the minimum temperature, the average temperature, and the maximum temperature for a given start or start-end range.
@@ -176,7 +178,7 @@ def start_date(start):
 
 
 @app.route("/api/v1.0/<start>/<stop>")
-def start_stop_date(StartStop):
+def start_stop_date(start, stop):
     
     # Create our session (link) from Python to the DB
     session = Session(engine)
